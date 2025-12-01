@@ -30,7 +30,7 @@ export async function decrypt(input: string): Promise<any> {
   }
 }
 
-export async function loginUser(credentials: { email: string; password: string; }): Promise<{ success: boolean; error?: string }> {
+export async function loginUser(credentials: { email: string; password: string; }): Promise<{ success: boolean; error?: string; user?: AppUser }> {
   const { email, password } = credentials;
 
   try {
@@ -87,7 +87,16 @@ export async function loginUser(credentials: { email: string; password: string; 
 
     (await cookies()).set('session', session, { expires, httpOnly: true });
 
-    return { success: true };
+    // Construct AppUser to return to client for immediate context update
+    const appUser: AppUser = {
+      ...user,
+      sucursal: user.sucursal_id,
+      sucursalName: user.sucursal_name,
+      supervisorId: user.supervisor_id,
+      supervisorName: user.supervisor_name
+    };
+
+    return { success: true, user: appUser };
 
   } catch (error) {
     console.error('[Login Action Error] Error inesperado en el servidor:', error);
