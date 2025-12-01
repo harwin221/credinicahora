@@ -38,8 +38,12 @@ export async function addCredit(creditData: Partial<CreditApplication> & { deliv
         const creditNumber = `CRE-${String(sequence).padStart(5, '0')}`;
         const newCreditId = `cred_${Date.now()}`;
 
+        // Fetch holidays to adjust payment dates
+        const holidaysResult: any = await query('SELECT date FROM holidays');
+        const holidays = holidaysResult.map((h: any) => formatDateForUser(h.date, 'yyyy-MM-dd'));
+
         const scheduleData = generatePaymentSchedule({
-            loanAmount: amount, monthlyInterestRate: interestRate, termMonths, paymentFrequency, startDate: firstPaymentDate
+            loanAmount: amount, monthlyInterestRate: interestRate, termMonths, paymentFrequency, startDate: firstPaymentDate, holidays
         });
         if (!scheduleData) {
             return { success: false, error: "No se pudo generar el plan de pagos." };
