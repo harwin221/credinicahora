@@ -2,11 +2,11 @@
 'use server';
 
 import { query } from '@/lib/mysql';
-import type { Holiday, User } from '@/lib/types';
+import type { Holiday, AppUser as User } from '@/lib/types';
 import { format } from 'date-fns';
 import { createLog } from './audit-log-service';
 import { revalidatePath } from 'next/cache';
-import { formatDateForUser } from '@/lib/date-utils';
+import { formatDateForUser, isoToMySQLDateTimeNoon } from '@/lib/date-utils';
 
 export const getHolidays = async (): Promise<Holiday[]> => {
     const rows: any = await query('SELECT * FROM holidays ORDER BY date ASC');
@@ -20,8 +20,9 @@ export const getHolidays = async (): Promise<Holiday[]> => {
 export const addHoliday = async (holidayData: Omit<Holiday, 'id'>, actor: User): Promise<{ success: boolean, id?: string, error?: string }> => {
     try {
         const newId = `hol_${Date.now()}`;
-        await query('INSERT INTO holidays (id, name, date) VALUES (?, ?, ?)', [newId, holidayData.name, holidayData.date]);
-        await createLog(actor, 'settings:holiday_add', `Agregó el feriado ${holidayData.name} para la fecha ${holidayData.date}.`, { targetId: newId });
+        const formattedDate = isoToMySQLDateTimeNoon(holidayData.date);
+        await query('INSERT INTO holidays (id, name, date) VALUES (?, ?, ?)', [newId, holidayData.name, formattedDate]);
+        await createLog(actor, 'settings:holiday_add', `Agregó el feriado ${holidayData.name} para la fecha ${formattedDate}.`, { targetId: newId });
         revalidatePath('/settings/holidays');
         return { success: true, id: newId };
     } catch (error: any) {
