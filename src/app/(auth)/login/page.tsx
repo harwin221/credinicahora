@@ -47,6 +47,13 @@ export default function LoginPage() {
           setUser(result.user);
         }
         toast({ title: 'Inicio de sesión exitoso', description: 'Bienvenido de nuevo.' });
+
+        // Force a router refresh to sync cookies and ensure state propagation
+        router.refresh();
+
+        // Small delay to allow state updates to settle before navigation
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         router.push('/dashboard');
       } else {
         // En lugar de lanzar un error, mostramos el toast con el mensaje del servidor.
